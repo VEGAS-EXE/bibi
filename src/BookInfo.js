@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import exceljs from 'exceljs';
-import Book from './models/Book';
-import 'tailwindcss/tailwind.css';
+import './main.css'; // Importez le fichier CSS
+import './modal.js';// Importez les fonctions du composant modal si nécessaire
 
 const BookInfo = () => {
   const [isbn, setIsbn] = useState('');
@@ -72,7 +73,7 @@ const BookInfo = () => {
       const workbook = new exceljs.Workbook();
       const worksheet = workbook.addWorksheet('Saved Books');
 
-      worksheet.addRow(['Title', 'Page Count', 'Published Date', 'Language', 'Authors', 'Publisher', 'ISBN', 'Nombre d\'exemplaires']);
+      worksheet.addRow(['Titre', 'Nb_Pages', 'Date_publication', 'Langue', 'Auteur(s)', 'Edition', 'ISBN', 'Nb_d\'exemplaires']);
 
       savedBooks.forEach(book => {
         worksheet.addRow([
@@ -86,6 +87,7 @@ const BookInfo = () => {
           book.nbre_exemplaire
         ]);
       });
+      
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -101,61 +103,106 @@ const BookInfo = () => {
       alert('Une erreur s\'est produite lors de l\'exportation des données vers Excel.');
     }
   };
-
+  const clearTable = () => {
+    const confirmRemove = window.confirm('Êtes-vous sûr de vouloir vider la table ?');
+    if (confirmRemove) {
+      setSavedBooks([]);
+    }
+    
+  };
   const handleInputChange = event => {
     setIsbn(event.target.value);
   };
 
+  const removeBook = (index) => {
+    const confirmRemove = window.confirm('Êtes-vous sûr de vouloir supprimer ce livre ?');
+    if (confirmRemove) {
+      const updatedBooks = [...savedBooks];
+      updatedBooks.splice(index, 1);
+      setSavedBooks(updatedBooks);
+    }
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Recherche de livre par ISBN</h1>
-      <div className="flex mb-4">
-        <input type="text" placeholder="ISBN" value={isbn} onChange={handleInputChange} className="mr-2 px-4 py-2 border border-gray-300 rounded-lg" />
-        <button onClick={fetchBookInfo} className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Rechercher</button>
+    <main className="container" >
+      <h1><b>BOOK FINDER</b></h1>
+      <div className="flexi">
+        <input type="text" placeholder="Enter book ID" value={isbn} onChange={handleInputChange} />
+        <button onClick={fetchBookInfo}>Search</button>
       </div>
-      <button onClick={saveBookInfo} className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">Sauvegarder</button>
-      <button onClick={exportToExcel} className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 ml-4">Exporter</button>
-      {bookData && (
-        <div className="my-4 p-4 border border-gray-300 rounded-lg">
-          <p><span className="font-semibold">Titre:</span> {bookData.title}</p>
-          <p><span className="font-semibold">Nombre de pages:</span> {bookData.pageCount}</p>
-          <p><span className="font-semibold">Date de publication:</span> {bookData.publishedDate}</p>
-          <p><span className="font-semibold">Langue:</span> {bookData.language}</p>
-          <p><span className="font-semibold">Auteur(s):</span> {bookData.authors.join(', ')}</p>
-          <p><span className="font-semibold">Éditeur:</span> {bookData.publisher}</p>
-          <p><span className="font-semibold">ISBN:</span> {bookData.isbn}</p>
+      <h1>Preview</h1>
+      <div className="contain">
+        {bookData && (
+          <table>
+            <tbody>
+            <tr>
+                <th>Title</th>
+                <th>Pages</th>
+                <th>Published</th>
+                <th>Language</th>
+                <th>Author(s)</th>
+                <th>Editor</th>
+                <th>ISBN</th>
+              </tr>
+              <tr>
+                <td>{bookData.title}</td>
+                <td>{bookData.pageCount}</td>
+                <td>{bookData.publishedDate}</td>
+                <td>{bookData.language}</td>
+                <td>{bookData.authors.join(', ')}</td>
+                <td>{bookData.publisher}</td>
+                <td>{bookData.isbn}</td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="button">
+        <button onClick={saveBookInfo}>Save</button>
+      </div>
+
+      <div className="book">
+        <h2>Books saved</h2>
+        <div>
+          <button onClick={exportToExcel}>Export</button>
+          <button className="peine" onClick={clearTable}>Clear</button>
         </div>
-      )}
-      <h2 className="text-xl font-bold mb-2">Livres Sauvegardés</h2>
-      <table className="w-full">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Titre</th>
-            <th className="px-4 py-2">Nombre de pages</th>
-            <th className="px-4 py-2">Date de publication</th>
-            <th className="px-4 py-2">Langue</th>
-            <th className="px-4 py-2">Auteur(s)</th>
-            <th className="px-4 py-2">Éditeur</th>
-            <th className="px-4 py-2">ISBN</th>
-            <th className="px-4 py-2">Nombre d'exemplaires</th>
-          </tr>
-        </thead>
-        <tbody>
-          {savedBooks.map((book, index) => (
-            <tr key={index}>
-              <td className="border px-4 py-2">{book.title}</td>
-              <td className="border px-4 py-2">{book.pageCount}</td>
-              <td className="border px-4 py-2">{book.publishedDate}</td>
-              <td className="border px-4 py-2">{book.language}</td>
-              <td className="border px-4 py-2">{book.authors.join(', ')}</td>
-              <td className="border px-4 py-2">{book.publisher}</td>
-              <td className="border px-4 py-2">{book.isbn}</td>
-              <td className="border px-4 py-2">{book.nbre_exemplaire}</td>
+      </div>
+
+      <div className="contain">
+        <table>
+          <tbody>
+            <tr>
+              <th>Title</th>
+              <th>Pages</th>
+              <th>Published</th>
+              <th>Language</th>
+              <th>Author</th>
+              <th>Editor</th>
+              <th>ISBN</th>
+              <th>In stock</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+            {savedBooks.map((book, index) => (
+              <tr key={index}>
+                <td>{book.title}</td>
+                <td>{book.pageCount}</td>
+                <td>{book.publishedDate}</td>
+                <td>{book.language}</td>
+                <td>{book.authors.join(', ')}</td>
+                <td>{book.publisher}</td>
+                <td>{book.isbn}</td>
+                <td>{book.nbre_exemplaire}</td>
+                <td>
+                  <button className='pain' onClick={() => removeBook(index)}>Remove</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
   );
 };
 
